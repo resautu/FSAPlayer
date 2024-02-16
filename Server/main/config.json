@@ -1,0 +1,6 @@
+{
+    "Port": "6868",
+    "MusicSourceDIr": "./data",
+    "AutoCalculateHash": "true",
+    "HashCalculateInterval": "3600"
+}
