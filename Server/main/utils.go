@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -80,6 +81,17 @@ func storeHashJson(path string) {
 	}
 }
 
+func storeJsonFile(path string, content map[string]string) {
+	file, err := json.MarshalIndent(content, "", " ")
+	if err != nil {
+		log.Warn(err)
+	}
+	err = os.WriteFile(path, file, 0644)
+	if err != nil {
+		log.Warn(err)
+	}
+}
+
 func loadHashJson() map[string]string {
 	lock.RLock()
 	defer lock.RUnlock()
@@ -104,4 +116,13 @@ func reCalculateHash(path string) {
 		log.Warn("Calculating hashes failed. Please check the path and try again.")
 	}
 	storeHashJson(path)
+}
+
+func generateToken(keylenth int) string {
+	b := make([]byte, keylenth)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Warn("Error: ", err)
+	}
+	return fmt.Sprintf("%x", b)
 }

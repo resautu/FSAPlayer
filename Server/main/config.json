@@ -2,5 +2,7 @@
     "Port": "6868",
     "MusicSourceDIr": "./data",
     "AutoCalculateHash": "true",
-    "HashCalculateInterval": "3600"
+    "HashCalculateInterval": "3600",
+    "AutoSetKey": "false",
+    "keyFile": ""
 }

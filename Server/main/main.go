@@ -17,22 +17,8 @@ var(
 	informPath string
 )
 
-func main() {
-	file, err := os.ReadFile("config.json")
-	log.SetLevel(log.InfoLevel)
-	informPath = "inform.json"
-	if err != nil {
-		log.Panicln("Config file not found. Please check the path and try again.")
-	}
-	err = json.Unmarshal(file, &config)
-	if err != nil {
-		log.Panicln("Config file is not valid. Please check the file and try again.")
-	}
-	
-	reCalculateHash(config["MusicSourceDIr"])
-
-	startHttpServer()
-	hashcalculateInterval, err = strconv.ParseUint(config["HashCalculateInterval"], 10, 64)
+func autoCalculateHash(){
+	hashcalculateInterval, err := strconv.ParseUint(config["HashCalculateInterval"], 10, 64)
 	if err != nil && config["AutoCalculateHash"] == "true" {
 		log.Panicln("hashcalculateInterval must be a interger.")
 	}
@@ -47,5 +33,59 @@ func main() {
 			}
 		}
 	}
+}
+
+func configKey(){
+	
+	keyFilePath := config["KeyFilePath"]
+	if keyFilePath == "" {
+		keyFilePath = "./key.json"
+	}
+	_, err := os.Stat(keyFilePath)
+	if err != nil {
+		keys := make(map[string]string)
+		keys["admin"] = generateToken(16)
+		keys["custom"] = generateToken(16)
+		storeJsonFile(keyFilePath, keys)
+		config["admin"] = keys["admin"]
+		config["custom"] = keys["custom"]
+	} else {
+		file, err := os.ReadFile(keyFilePath)
+		if err != nil {
+			log.Panicln("Key file not found. Please check the path and try again.")
+		}
+		err = json.Unmarshal(file, &config)
+		if err != nil {
+			log.Panicln("Key file is not valid. Please check the file and try again.")
+		}
+	}
+	
+}
+
+
+func main() {
+	file, err := os.ReadFile("config.json")
+	log.SetLevel(log.InfoLevel)
+	informPath = "inform.json"
+	if err != nil {
+		log.Panicln("Config file not found. Please check the path and try again.")
+	}
+	err = json.Unmarshal(file, &config)
+	if err != nil {
+		log.Panicln("Config file is not valid. Please check the file and try again.")
+	}
+	fileInfo, err := os.Stat(config["MusicSourceDIr"])
+	if err != nil || !fileInfo.IsDir() {
+		log.Errorln("Music source Dictory found.")
+		config["MusicSourceDIr"] = "."
+	}
+	reCalculateHash(config["MusicSourceDIr"])
+	configKey()
+	startHttpServer()
+
+	if config["AutoCalculateHash"] == "true" {
+		autoCalculateHash()
+	}
+	
 
 }

@@ -11,6 +11,7 @@ import okhttp3.*;
 public class HTTPClient {
     private static HTTPClient instance;
     private String _serverAddress;
+    private String httpServerAddress;
     private OkHttpClient client;
     public synchronized static HTTPClient getInstance() {
         if (instance == null) {
@@ -20,6 +21,7 @@ public class HTTPClient {
     }
     public void init(String serverAddress) {
         _serverAddress = serverAddress;
+        httpServerAddress = "http://" + _serverAddress;
         client = new OkHttpClient.Builder().cookieJar(new CookieJar() {
             private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
             @Override
@@ -39,7 +41,7 @@ public class HTTPClient {
     }
     public String sendSyncGetRequest(){
         Request request = new Request.Builder()
-                .url(_serverAddress)
+                .url(httpServerAddress)
                 .build();
         try (Response response = client.newCall(request).execute()) {
             return response.body().string();
@@ -49,7 +51,7 @@ public class HTTPClient {
     }
     public void sendAsyncGetRequest(){
         Request request = new Request.Builder()
-                .url(_serverAddress)
+                .url(httpServerAddress)
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -63,17 +65,16 @@ public class HTTPClient {
             }
         });
     }
-    public String sendSyncPostRequest(Map<String, String> data) {
+    public Response sendSyncPostRequest(Map<String, String> data, String path) {
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), data.toString());
         Request request = new Request.Builder()
-                .url(_serverAddress)
+                .url(httpServerAddress + path)
                 .post(body)
                 .build();
         try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
+            return response;
         } catch (Exception e) {
-            return "网络请求错误，请检查网络连接或网络地址是否正确！";
+            return null;
         }
-
     }
 }

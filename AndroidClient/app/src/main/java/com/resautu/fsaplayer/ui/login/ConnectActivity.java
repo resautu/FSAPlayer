@@ -74,9 +74,11 @@ public class ConnectActivity extends AppCompatActivity {
                 }
                 loadingProgressBar.setVisibility(View.GONE);
                 if (loginResult.getError() != null) {
+                    Toast.makeText(getApplicationContext(), "登录失败，请检查输入是否正确以及网络连接是否正常", Toast.LENGTH_SHORT).show();
                     showLoginFailed(loginResult.getError());
                 }
                 if (loginResult.getSuccess() != null) {
+                    Toast.makeText(getApplicationContext(), "登录成功", Toast.LENGTH_SHORT).show();
                     updateUiWithUser(loginResult.getSuccess());
                 }
                 setResult(Activity.RESULT_OK);
