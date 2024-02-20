@@ -25,9 +25,21 @@ func handleAudioRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_token, err := r.Cookie("token")
-	if err != nil || cookieSet[_token.Name] == "" {
+	cookie := r.Cookies()
+	if cookie == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	
+	}
+	noLogin := true
+	for _, v := range cookie {
+		if cookieSet[v.Name] != "" {
+			noLogin = false
+		}
+	}
+	if noLogin {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		log.Infof("Unauthorized audio request from %s", r.RemoteAddr)
 		return
 	}
 
@@ -41,11 +53,14 @@ func handleAudioRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 根据哈希值找到对应的音频文件
-	audioFilePath := audioHashes[hash]
-	if audioFilePath == "" {
+	audioFileName := audioHashes[hash]
+
+	if audioFileName == "" {
 		http.Error(w, "Audio file not found", http.StatusNotFound)
 		return
 	}
+	audioFilePath := config["MusicSourceDir"] + "/" + audioFileName
+
 	// 打开音频文件
 	audioFile, err := os.Open(audioFilePath)
 	if err != nil {
@@ -70,8 +85,19 @@ func handleInformRequest(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	_token, err := r.Cookie("token")
-	if err != nil || cookieSet[_token.Name] == "" {
+	cookie := r.Cookies()
+	if cookie == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	
+	}
+	noLogin := true
+	for _, v := range cookie {
+		if cookieSet[v.Name] != "" {
+			noLogin = false
+		}
+	}
+	if noLogin {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -104,12 +130,16 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request){
 	}
 	log.Infof("Received login request from %s", r.RemoteAddr)
 
-	_token, err := r.Cookie("token")
-	if err == nil && cookieSet[_token.Name] != "" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
+	cookie := r.Cookies()
+	if cookie != nil {
+		for _, v := range cookie {
+			if cookieSet[v.Name] != "" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
 	
+	}
 
 	request_key := r.FormValue("key")
 	rand_key := generateToken(16)
@@ -139,11 +169,21 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request){
 
 }
 
+func handleBaseRequest(w http.ResponseWriter, r *http.Request){
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	log.Infof("Received base request from %s, URL:%s", r.RemoteAddr, r.URL)
+	w.WriteHeader(http.StatusOK)
+}
+
 func startHttpServer(){
 	http.HandleFunc("/audio", handleAudioRequest)
 	http.HandleFunc("/inform", handleInformRequest)
 	http.HandleFunc("/login", handleLoginRequest)
-	
+	http.HandleFunc("/", handleBaseRequest)
+
 	cookieSet = make(map[string]string)
 
 	fmt.Printf("Server listening on port %s...", config["Port"])

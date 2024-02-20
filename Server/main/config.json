@@ -1,8 +1,9 @@
 {
     "Port": "6868",
-    "MusicSourceDIr": "./data",
+    "MusicSourceDir": "./data",
     "AutoCalculateHash": "true",
     "HashCalculateInterval": "3600",
     "AutoSetKey": "false",
-    "keyFile": ""
+    "keyFile": "",
+    "Desc": "Have a good listening!"
 }

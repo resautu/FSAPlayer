@@ -33,18 +33,17 @@ public class ConnectActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
     private ActivityConnectBinding binding;
-    private FSAPlayerApplication fsaPlayerApplication;
+    private FSAPlayerApplication app;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fsaPlayerApplication = FSAPlayerApplication.getInstance();
+        app = FSAPlayerApplication.getInstance();
         binding = ActivityConnectBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
-        fsaPlayerApplication.loginViewModel = loginViewModel;
         final EditText usernameEditText = binding.username;
         final EditText passwordEditText = binding.password;
         final Button loginButton = binding.login;
@@ -137,9 +136,10 @@ public class ConnectActivity extends AppCompatActivity {
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
-        String welcome = getString(R.string.welcome) + model.getDisplayName();
+        app.setServerData(model.getServerData());
+        app.getDisplayName().setValue(model.getDisplayName());
         // TODO : initiate successful logged in experience
-        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), getString(R.string.welcome), Toast.LENGTH_LONG).show();
     }
 
     private void showLoginFailed(@StringRes Integer errorString) {

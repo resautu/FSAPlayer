@@ -13,11 +13,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type item struct {
+	Name string
+	Value string
+}
 type infom struct {
 	CalculateTime string
 	ServerIp string
 	Port string
-	Hashes map[string]string
+	ServerDesc string
+	Hashes map[string]item
 }
 
 func calculateHash(path string) string {
@@ -55,7 +60,7 @@ func calculateAllFilesHash(path string) map[string]string {
 	}
 	hashes := make(map[string]string)
 	for _, file := range files {
-		hashes[calculateHash(file)] = file
+		hashes[calculateHash(file)] = filepath.Base(file)
 	}
 	return hashes
 }
@@ -65,11 +70,18 @@ func storeHashJson(path string) {
 	if hashes == nil {
 		log.Warn("Calculating hashes failed. Please check the path and try again.")
 	}
+
+	export_hashmap := map[string]item{}
+	for k, v := range hashes {
+		export_hashmap[k] = item{v, k}
+	}
+
 	content := &infom{
 		CalculateTime: time.Now().Format("2006-01-02 15:04:05"),
 		ServerIp: "",
 		Port: config["Port"],
-		Hashes: hashes,
+		ServerDesc: config["Desc"],
+		Hashes: export_hashmap,
 	}
 	file, err := json.MarshalIndent(content, "", " ")
 	if err != nil {
@@ -101,7 +113,11 @@ func loadHashJson() map[string]string {
 	}
 	var content infom
 	err = json.Unmarshal(file, &content)
-	audioHashes = content.Hashes
+	audioHashes = make(map[string]string)
+	for k, v := range content.Hashes {
+		audioHashes[k] = v.Name
+	}
+
 	if err != nil {
 		log.Warn(err)
 	}
