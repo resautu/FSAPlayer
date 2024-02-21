@@ -54,4 +54,12 @@ public class FileUtil {
             return null;
         }
     }
+
+    public static boolean deleteIfExists(String path){
+        File file = new File(path);
+        if(file.exists()){
+            return file.delete();
+        }
+        return true;
+    }
 }

@@ -83,7 +83,7 @@ func main() {
 	}
 	reCalculateHash(config["MusicSourceDir"])
 	configKey()
-	startHttpServer()
+	startGinHttpServer()
 
 	if config["AutoCalculateHash"] == "true" {
 		autoCalculateHash()

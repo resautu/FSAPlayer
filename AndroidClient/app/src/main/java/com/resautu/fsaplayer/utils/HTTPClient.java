@@ -19,13 +19,12 @@ public class HTTPClient {
     public synchronized static HTTPClient getInstance() {
         if (instance == null) {
             instance = new HTTPClient();
+            instance.init();
         }
         return instance;
     }
-    public void init(String serverAddress) {
-        _serverAddress = serverAddress;
-        httpServerAddress = "http://" + _serverAddress;
-        serverID = HashUtil.sMD5(serverAddress);
+    public void init() {
+        setServerInformation("127.0.0.1");
         client = new OkHttpClient.Builder().cookieJar(new CookieJar() {
             private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
             @Override
@@ -43,27 +42,18 @@ public class HTTPClient {
             }
         }).build();
     }
+
+    public boolean setServerInformation(String serverAddress){
+        _serverAddress = serverAddress;
+        httpServerAddress = "http://" + _serverAddress;
+        serverID = HashUtil.sMD5(serverAddress);
+        return true;
+    }
     public Response sendSyncGetRequest(String path) throws IOException {
         Request request = new Request.Builder()
                 .url(httpServerAddress + path)
                 .build();
         return client.newCall(request).execute();
-    }
-    public void sendAsyncGetRequest(){
-        Request request = new Request.Builder()
-                .url(httpServerAddress)
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                return;
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-
-            }
-        });
     }
     public Response sendSyncPostRequest(Map<String, String> data, String path) {
         FormBody.Builder formBuilder = new FormBody.Builder();

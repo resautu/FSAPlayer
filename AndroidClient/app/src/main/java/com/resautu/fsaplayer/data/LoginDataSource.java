@@ -33,7 +33,7 @@ public class LoginDataSource {
             // TODO: handle loggedInUser authentication
             SPManager.writeSP("serverAddress", username);
             SPManager.writeSP("key", password);
-            app.httpClient.init(username);
+            app.httpClient.setServerInformation(username);
             Map<String, String> form = new HashMap<>();
             form.put("key", password);
 

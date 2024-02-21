@@ -7,12 +7,20 @@
     android:layout_margin="@dimen/fab_margin"
     tools:context=".PlayerActivity">
 
-    <ImageView
+<!--    <ImageView-->
+<!--        android:id="@+id/music_cover_image_view"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_above="@id/function_field"-->
+<!--        android:src="@drawable/headico"-->
+<!--        android:scaleType="centerCrop"-->
+<!--        android:layout_alignParentTop="true"/>-->
+    <com.resautu.fsaplayer.ui.CircleImageView
         android:id="@+id/music_cover_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/function_field"
-        android:src="@drawable/bg"
+        android:src="@drawable/headico"
         android:scaleType="centerCrop"
         android:layout_alignParentTop="true"/>
 
@@ -89,47 +97,56 @@
             android:gravity="center">
 
             <ImageButton
-                android:id="@+id/previous_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/seek_bar"
-                android:src="@drawable/ico_previous"
+                android:id="@+id/play_mode_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_loopplay"
                 android:layout_margin="@dimen/icon_margin"
-                android:layout_toRightOf="@id/play_pause_button"/>
+                />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/previous_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/seek_bar"
+                    android:src="@drawable/ico_previous"
+                    android:layout_margin="@dimen/icon_margin"
+                    android:layout_toRightOf="@id/play_pause_button"/>
 
 
-            <ImageButton
-                android:id="@+id/play_pause_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/icon_margin"
-                android:src="@drawable/ic_play"
-                android:layout_below="@id/seek_bar"/>
+                <ImageButton
+                    android:id="@+id/play_pause_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/icon_margin"
+                    android:src="@drawable/ic_play"
+                    android:layout_below="@id/seek_bar"/>
 
-            <ImageButton
-                android:id="@+id/next_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/icon_margin"
-                android:layout_below="@id/seek_bar"
-                android:src="@drawable/ico_next"
-                android:layout_toRightOf="@id/previous_button"/>
+                <ImageButton
+                    android:id="@+id/next_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/icon_margin"
+                    android:layout_below="@id/seek_bar"
+                    android:src="@drawable/ico_next"
+                    android:layout_toRightOf="@id/previous_button"/>
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
 
         </LinearLayout>
 
     </LinearLayout>
-
-
-
-
-
-    <ImageButton
-        android:id="@+id/play_mode_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Play Mode"
-        android:layout_below="@id/seek_bar"
-        android:layout_alignParentRight="true"/>
-
 
 </RelativeLayout>

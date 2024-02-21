@@ -3,15 +3,25 @@ package com.resautu.fsaplayer;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
+import android.graphics.Matrix;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
+import android.view.animation.Transformation;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.resautu.fsaplayer.data.ItemData;
 import com.resautu.fsaplayer.utils.FileUtil;
@@ -28,6 +38,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private ImageButton preButton;
     private TextView tvCurrentTime;
     private TextView tvDuration;
+    private ImageView ivAudioImage;
+    private Animator playerImageAnimator;
+    private ImageButton playModeButton;
+    private Handler toastHandler;
 
     private enum PlayMode {
         SINGLE, LOOP, RANDOM
@@ -58,10 +72,12 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         tvSongDesc = findViewById(R.id.tv_song_desc);
         seekBar = findViewById(R.id.seek_bar);
         playPauseButton = findViewById(R.id.play_pause_button);
+        playModeButton = findViewById(R.id.play_mode_button);
         nextButton = findViewById(R.id.next_button);
         preButton = findViewById(R.id.previous_button);
         tvCurrentTime = findViewById(R.id.tv_current_time);
         tvDuration = findViewById(R.id.tv_duration);
+        ivAudioImage = findViewById(R.id.music_cover_image_view);
 
         app = FSAPlayerApplication.getInstance();
 
@@ -69,6 +85,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         preButton.setOnClickListener(this);
         nextButton.setOnClickListener(this);
         seekBar.setOnSeekBarChangeListener(this);
+        playModeButton.setOnClickListener(this);
 
         audioItemList = app.getAudioItemList();
 
@@ -86,6 +103,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnErrorListener(this);
         mediaPlayer.setOnCompletionListener(this);
+        playerImageAnimator = AnimatorInflater.loadAnimator(this, R.animator.player_image_rotator);
+        playerImageAnimator.setTarget(ivAudioImage);
+        playerImageAnimator.setInterpolator(new LinearInterpolator());
 
         Handler.Callback callback = msg -> {
             String path = msg.getData().getString("path");
@@ -93,11 +113,19 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 mediaPlayer.setDataSource(path);
                 mediaPlayer.prepareAsync();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                FileUtil.deleteIfExists(path);
+                Toast.makeText(this, "无法播放音频, 请检查与服务器连接是否正常", Toast.LENGTH_SHORT).show();
             }
             return true;
         };
         audioPrepareHandler = new Handler(callback);
+
+        Handler.Callback toastCallback = msg -> {
+            String toast = msg.getData().getString("toast");
+            Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
+            return true;
+        };
+        toastHandler = new Handler(toastCallback);
         prepareAudio();
 
     }
@@ -115,6 +143,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private void prepareAudio(){
         seekBar.setEnabled(false);
         File audioFile = new File(cacheDir, audioHashValue);
+
         if(audioFile.exists()){
             Message msg = new Message();
             Bundle bundle = new Bundle();
@@ -128,7 +157,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 audioFile.createNewFile();
             } catch (IOException e) {
                 Log.e("PlayerActivity", "Failed to create audio file: " + audioFile.getAbsolutePath());
-                throw new RuntimeException(e);
+                Toast.makeText(this, "无法创建文件: " + audioFile.getAbsolutePath() + ", 请检查文件权限是否提供", Toast.LENGTH_SHORT).show();
+                return;
             }
         }
         Runnable r = () -> {
@@ -143,8 +173,15 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                     bundle.putString("path", audioFile.getAbsolutePath());
                     msg.setData(bundle);
                     audioPrepareHandler.sendMessage(msg);
+                } else{
+                    throw new RuntimeException("Failed to get audio file: " + audioHashValue);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
+                Message msg = new Message();
+                Bundle bundle = new Bundle();
+                bundle.putString("toast", "网络连接异常！请检查网络连接并重新连接服务器！");
+                msg.setData(bundle);
+                toastHandler.sendMessage(msg);
                 e.printStackTrace();
             }
         };
@@ -157,9 +194,15 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
                 playPauseButton.setImageResource(R.drawable.ic_play);
+                if(playerImageAnimator.isRunning()){
+                    playerImageAnimator.pause();
+                }
             } else {
                 mediaPlayer.start();
                 playPauseButton.setImageResource(R.drawable.ic_pause);
+                if(playerImageAnimator.isPaused()){
+                    playerImageAnimator.resume();
+                }
             }
         } else if(v.getId() == R.id.next_button){
             audioPlayingIndex = (audioPlayingIndex + 1) % audioItemList.size();
@@ -179,6 +222,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             tvSongDesc.setText(audioDesc);
             mediaPlayer.reset();
             prepareAudio();
+        } else if(v.getId() == R.id.play_mode_button){
+            if(playMode == PlayMode.LOOP){
+                playMode = PlayMode.RANDOM;
+                playModeButton.setImageResource(R.drawable.ic_randomplay);
+            } else if(playMode == PlayMode.RANDOM){
+                playMode = PlayMode.SINGLE;
+                playModeButton.setImageResource(R.drawable.ic_singleplay);
+            } else if(playMode == PlayMode.SINGLE){
+                playMode = PlayMode.LOOP;
+                playModeButton.setImageResource(R.drawable.ic_loopplay);
+            }
         }
     }
 
@@ -186,6 +240,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if (fromUser) {
             mediaPlayer.seekTo(progress);
+            tvCurrentTime.setText(StringUtil.converTime(progress));
         }
     }
 
@@ -205,6 +260,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         seekBar.setEnabled(true);
         int duration = mp.getDuration();
         tvDuration.setText(StringUtil.converTime(duration));
+
+        if(playerImageAnimator.isPaused()){
+            playerImageAnimator.resume();
+        } else if(!playerImageAnimator.isRunning()){
+            playerImageAnimator.start();
+        }
+
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -212,6 +274,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                     int currentPosition = mediaPlayer.getCurrentPosition();
                     seekBar.setProgress(currentPosition);
                     tvCurrentTime.setText(StringUtil.converTime(currentPosition));
+                    //ivAudioImage.setRotation(ivAudioImage.getRotation() + 0.5f);
                 }
                 handler.postDelayed(this, 1000); // 每秒更新一次SeekBar的位置
             }
